@@ -4,35 +4,34 @@
 #define MAX 100
 
 typedef struct {
-    int id, at, bt, rt;
-    int st, ct, tat, wt;
-    int started;
+    int id, at, bt, rt, st, ct, tat, wt, rt_time, started;
 } Process;
 
 void input(Process p[], int n) {
     for (int i = 0; i < n; i++) {
         p[i].id = i + 1;
-        printf("Enter Arrival Time and Burst Time for P%d: ", p[i].id);
+        printf("Enter Arrival Time and Burst Time of P%d: ", p[i].id);
         scanf("%d%d", &p[i].at, &p[i].bt);
         p[i].rt = p[i].bt;
         p[i].started = 0;
+        p[i].rt_time = -1;  // Initialize to -1
     }
 }
 
 int findShortest(Process p[], int n, int time) {
-    int idx = -1, min_rt = INT_MAX;
+    int min_rt = INT_MAX, index = -1;
     for (int i = 0; i < n; i++) {
         if (p[i].at <= time && p[i].rt > 0 && p[i].rt < min_rt) {
             min_rt = p[i].rt;
-            idx = i;
+            index = i;
         }
     }
-    return idx;
+    return index;
 }
 
 void calculate(Process p[], int n) {
-    int time = 0, completed = 0, prev = -1;
-    float total_tat = 0, total_wt = 0;
+    int time = 0, completed = 0, last = -1;
+    float total_tat = 0, total_wt = 0, total_rt = 0;
 
     printf("\nGantt Chart:\n");
 
@@ -46,16 +45,15 @@ void calculate(Process p[], int n) {
 
         if (p[idx].started == 0) {
             p[idx].st = time;
+            p[idx].rt_time = time - p[idx].at; // Response Time
             p[idx].started = 1;
         }
 
-        // Print only on context switch
-        if (idx != prev) {
+        if (last != idx) {
             printf("| P%d ", p[idx].id);
-            prev = idx;
+            last = idx;
         }
 
-        // Execute for 1 unit
         p[idx].rt--;
         time++;
 
@@ -65,19 +63,21 @@ void calculate(Process p[], int n) {
             p[idx].wt = p[idx].tat - p[idx].bt;
             total_tat += p[idx].tat;
             total_wt += p[idx].wt;
+            total_rt += p[idx].rt_time;
             completed++;
         }
     }
+    printf("|\n");
 
-    printf("|\n\nProcess\tAT\tBT\tST\tCT\tTAT\tWT\n");
+    printf("\nProcess\tAT\tBT\tST\tCT\tTAT\tWT\tRT\n");
     for (int i = 0; i < n; i++) {
-        printf("P%d\t%d\t%d\t%d\t%d\t%d\t%d\n",
-               p[i].id, p[i].at, p[i].bt, p[i].st,
-               p[i].ct, p[i].tat, p[i].wt);
+        printf("P%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\n", p[i].id, p[i].at, p[i].bt, p[i].st,
+               p[i].ct, p[i].tat, p[i].wt, p[i].rt_time);
     }
 
     printf("\nAverage Turnaround Time: %.2f", total_tat / n);
-    printf("\nAverage Waiting Time: %.2f\n", total_wt / n);
+    printf("\nAverage Waiting Time: %.2f", total_wt / n);
+    printf("\nAverage Response Time: %.2f\n", total_rt / n);
 }
 
 int main() {
