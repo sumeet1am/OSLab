@@ -14,7 +14,7 @@ void input(Process p[], int n) {
         scanf("%d%d", &p[i].at, &p[i].bt);
         p[i].rt = p[i].bt;
         p[i].started = 0;
-        p[i].rt_time = -1;  // Initialize to -1
+        p[i].rt_time = -1;
     }
 }
 
@@ -34,23 +34,25 @@ void calculate(Process p[], int n) {
     float total_tat = 0, total_wt = 0, total_rt = 0;
 
     printf("\nGantt Chart:\n");
+    printf("%d ", time);
 
     while (completed < n) {
         int idx = findShortest(p, n, time);
 
         if (idx == -1) {
             time++;
+            printf("| IDLE %d ", time);
             continue;
         }
 
         if (p[idx].started == 0) {
             p[idx].st = time;
-            p[idx].rt_time = time - p[idx].at; // Response Time
+            p[idx].rt_time = time - p[idx].at;
             p[idx].started = 1;
         }
 
         if (last != idx) {
-            printf("| P%d ", p[idx].id);
+            printf("| P%d %d ", p[idx].id, time);
             last = idx;
         }
 
