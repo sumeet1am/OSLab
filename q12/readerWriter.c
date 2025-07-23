@@ -11,34 +11,6 @@ int numreader = 0;
 void *reader(void *rno);
 void *writer(void *wno);
 
-int main()
-{
-    pthread_t write[3], read[3];
-    pthread_mutex_init(&mutex, NULL);
-    sem_init(&wrt, 0, 1);
-
-    int *a[3]; // Array of pointers to integers for thread arguments
-
-    for (int i = 0; i < 3; i++)
-    {
-        a[i] = malloc(sizeof(int)); // Allocate memory for each argument
-        *a[i] = i + 1;
-        pthread_create(&read[i], NULL, reader, a[i]);
-        pthread_create(&write[i], NULL, writer, a[i]);
-    }
-
-    for (int i = 0; i < 3; i++)
-    {
-        pthread_join(read[i], NULL);
-        pthread_join(write[i], NULL);
-        free(a[i]); // Free allocated memory after threads complete
-    }
-
-    pthread_mutex_destroy(&mutex);
-    sem_destroy(&wrt);
-    return 0;
-}
-
 void *reader(void *rno)
 {
     pthread_mutex_lock(&mutex);
@@ -67,3 +39,33 @@ void *writer(void *wno)
 
     return NULL;
 }
+
+
+int main()
+{
+    pthread_t write[3], read[3];
+    pthread_mutex_init(&mutex, NULL);
+    sem_init(&wrt, 0, 1);
+
+    int *a[3]; // Array of pointers to integers for thread arguments
+
+    for (int i = 0; i < 3; i++)
+    {
+        a[i] = malloc(sizeof(int)); // Allocate memory for each argument
+        *a[i] = i + 1;
+        pthread_create(&read[i], NULL, reader, a[i]);
+        pthread_create(&write[i], NULL, writer, a[i]);
+    }
+
+    for (int i = 0; i < 3; i++)
+    {
+        pthread_join(read[i], NULL);
+        pthread_join(write[i], NULL);
+        free(a[i]); // Free allocated memory after threads complete
+    }
+
+    pthread_mutex_destroy(&mutex);
+    sem_destroy(&wrt);
+    return 0;
+}
+
