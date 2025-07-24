@@ -28,11 +28,14 @@ void display(Process p[], int n, float avg_wt, float avg_tat, float avg_rt) {
 }
 
 void roundRobin(Process p[], int n, int tq) {
-    int time = 0, total = 0, done = 0;
+    int time = 0, done = 0;
     int queue[100], front = 0, rear = 0, visited[100] = {0};
     float total_tat = 0, total_wt = 0, total_rt = 0;
 
-    // Sort by arrival time
+    // Timeline tracking
+    int timeline[200], timeline_index = 0;
+
+    // Sort processes by arrival time
     for (int i = 0; i < n - 1; i++)
         for (int j = i + 1; j < n; j++)
             if (p[i].at > p[j].at) {
@@ -41,10 +44,13 @@ void roundRobin(Process p[], int n, int tq) {
 
     queue[rear++] = 0;
     visited[0] = 1;
+
     printf("\nGantt Chart:\n");
+    timeline[timeline_index++] = time;
 
     while (done < n) {
         int idx = queue[front++];
+
         if (p[idx].started == 0) {
             p[idx].st = time;
             p[idx].res_t = time - p[idx].at;
@@ -52,11 +58,12 @@ void roundRobin(Process p[], int n, int tq) {
         }
 
         int exec = (p[idx].rt >= tq) ? tq : p[idx].rt;
-        printf("| P%d (%d) ", p[idx].id, time);
+        printf("| P%d ", p[idx].id);
         time += exec;
+        timeline[timeline_index++] = time;
         p[idx].rt -= exec;
 
-        // Add new processes to queue
+        // Enqueue new processes
         for (int i = 0; i < n; i++) {
             if (p[i].at <= time && !visited[i] && p[i].rt > 0) {
                 queue[rear++] = i;
@@ -64,9 +71,9 @@ void roundRobin(Process p[], int n, int tq) {
             }
         }
 
-        if (p[idx].rt > 0)
+        if (p[idx].rt > 0) {
             queue[rear++] = idx;
-        else {
+        } else {
             p[idx].ct = time;
             p[idx].tat = p[idx].ct - p[idx].at;
             p[idx].wt = p[idx].tat - p[idx].bt;
@@ -76,20 +83,30 @@ void roundRobin(Process p[], int n, int tq) {
             done++;
         }
 
-        // If queue is empty but processes remain, jump to next arrival
+        // Handle idle time
         if (front == rear && done < n) {
             for (int i = 0; i < n; i++) {
                 if (p[i].rt > 0) {
+                    if (time < p[i].at) {
+                        time = p[i].at;
+                        timeline[timeline_index++] = time;
+                    }
                     queue[rear++] = i;
                     visited[i] = 1;
-                    if (time < p[i].at) time = p[i].at;
                     break;
                 }
             }
         }
     }
 
-    printf("| %d |\n", time);
+    printf("|\n");
+
+    // Print timeline below Gantt chart
+    for (int i = 0; i < timeline_index; i++) {
+        printf("%-5d", timeline[i]);
+    }
+    printf("\n");
+
     display(p, n, total_wt / n, total_tat / n, total_rt / n);
 }
 
