@@ -31,10 +31,10 @@ int findShortest(Process p[], int n, int time) {
 }
 
 void calculate(Process p[], int n) {
-    int time = 0, completed = 0, last = -1;
+    int time = 0, completed = 0;
     float total_tat = 0, total_wt = 0, total_rt = 0;
 
-    printf("\nGantt Chart:\n%d ", time);
+    printf("\nGantt Chart:\n");
 
     while (completed < n) {
         int idx = findShortest(p, n, time);
@@ -50,10 +50,8 @@ void calculate(Process p[], int n) {
             p[idx].started = 1;
         }
 
-        if (last != idx) {
-            printf("| P%d %d ", p[idx].id, time);
-            last = idx;
-        }
+        // Print exactly like your example: | Pid(1) time|
+        printf("| P%d(1) %d", p[idx].id, time + 1);
 
         p[idx].rt--;
         time++;
@@ -69,7 +67,7 @@ void calculate(Process p[], int n) {
             completed++;
         }
     }
-    printf("| %d\n", time);
+    printf("|\n");
 
     printf("\nProcess\tAT\tBT\tST\tCT\tTAT\tWT\tRT\n");
     for (int i = 0; i < n; i++) {
@@ -82,6 +80,7 @@ void calculate(Process p[], int n) {
     printf("\nAverage Waiting Time: %.2f", total_wt / n);
     printf("\nAverage Response Time: %.2f\n", total_rt / n);
 }
+
 
 int main() {
     Process p[MAX];
