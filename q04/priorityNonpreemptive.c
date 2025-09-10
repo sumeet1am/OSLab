@@ -1,72 +1,84 @@
 #include <stdio.h>
-#include <stdlib.h>
+#include <limits.h>
+#define MAX 100
 
-struct process {
-    int id, bt, pr, st, ct, tat, wt, rt;
-    int completed;
-};
+typedef struct {
+    int id, at, bt, pr;
+    int st, ct, tat, wt, rt_time, started;
+} Process;
 
-void input(struct process p[], int n) {
+void input(Process p[], int n) {
     for (int i = 0; i < n; i++) {
         p[i].id = i + 1;
-        printf("Enter Burst Time and Priority (lower number = higher priority) for P%d: ", i + 1);
-        scanf("%d%d", &p[i].bt, &p[i].pr);
-        p[i].completed = 0;
+        printf("Enter AT, BT, Priority of P%d: ", p[i].id);
+        scanf("%d%d%d", &p[i].at, &p[i].bt, &p[i].pr);
+        p[i].started = 0;
     }
 }
 
-int findNext(struct process p[], int n) {
-    int min_pr = 9999, idx = -1;
+int findNext(Process p[], int n, int time) {
+    int idx = -1, minPr = INT_MAX;
     for (int i = 0; i < n; i++) {
-        if (!p[i].completed && p[i].pr < min_pr) {
-            min_pr = p[i].pr;
-            idx = i;
+        if (p[i].started == 0 && p[i].at <= time) {
+            if (p[i].pr < minPr || 
+               (p[i].pr == minPr && p[i].at < p[idx].at)) {
+                minPr = p[i].pr;
+                idx = i;
+            }
         }
     }
     return idx;
 }
 
-void priorityNonPreemptive(struct process p[], int n) {
-    int time = 0;
-    printf("\nGantt Chart:\n|");
-    for (int i = 0; i < n; i++) {
-        int idx = findNext(p, n);
-        p[idx].st = time;
-        p[idx].ct = time + p[idx].bt;
-        p[idx].tat = p[idx].ct;
-        p[idx].wt = p[idx].tat - p[idx].bt;
-        p[idx].rt = p[idx].st;
-        time = p[idx].ct;
-        p[idx].completed = 1;
-        printf(" P%d |", p[idx].id);
-    }
-    printf("\n0");
-    for (int i = 0; i < n; i++) {
-        printf("   %2d", p[i].ct);
-    }
-}
+void calculate(Process p[], int n) {
+    int time = 0, completed = 0;
+    float sum_tat = 0, sum_wt = 0, sum_rt = 0;
 
-void display(struct process p[], int n) {
-    float total_tat = 0, total_wt = 0, total_rt = 0;
-    printf("\n\nID\tBT\tPR\tST\tCT\tTAT\tWT\tRT\n");
-    for (int i = 0; i < n; i++) {
-        printf("P%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\n", p[i].id, p[i].bt, p[i].pr, p[i].st, p[i].ct, p[i].tat, p[i].wt, p[i].rt);
-        total_tat += p[i].tat;
-        total_wt += p[i].wt;
-        total_rt += p[i].rt;
+    printf("\nGantt Chart:\n");
+
+    while (completed < n) {
+        int idx = findNext(p, n, time);
+
+        if (idx == -1) { time++; continue; }
+
+        p[idx].st = (time < p[idx].at) ? p[idx].at : time;
+        p[idx].rt_time = p[idx].st - p[idx].at;
+        p[idx].ct = p[idx].st + p[idx].bt;
+        p[idx].tat = p[idx].ct - p[idx].at;
+        p[idx].wt  = p[idx].tat - p[idx].bt;
+        p[idx].started = 1;
+
+        printf("| P%d(%d) %d", p[idx].id, p[idx].bt, p[idx].ct);
+
+        sum_tat += p[idx].tat;
+        sum_wt  += p[idx].wt;
+        sum_rt  += p[idx].rt_time;
+        time = p[idx].ct;
+        completed++;
     }
-    printf("\nAverage TAT = %.2f", total_tat / n);
-    printf("\nAverage WT  = %.2f", total_wt / n);
-    printf("\nAverage RT  = %.2f\n", total_rt / n);
+    printf("|\n");
+
+    printf("\nPID\tAT\tBT\tPR\tST\tCT\tTAT\tWT\tRT\n");
+    for (int i = 0; i < n; i++) {
+        printf("P%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\n",
+               p[i].id, p[i].at, p[i].bt, p[i].pr,
+               p[i].st, p[i].ct, p[i].tat, p[i].wt, p[i].rt_time);
+    }
+
+    printf("\nAverage TAT: %.2f", sum_tat / n);
+    printf("\nAverage WT: %.2f", sum_wt / n);
+    printf("\nAverage RT: %.2f\n", sum_rt / n);
 }
 
 int main() {
+    Process p[MAX];
     int n;
+
     printf("Enter number of processes: ");
     scanf("%d", &n);
-    struct process p[n];
+
     input(p, n);
-    priorityNonPreemptive(p, n);
-    display(p, n);
+    calculate(p, n);
+
     return 0;
 }
