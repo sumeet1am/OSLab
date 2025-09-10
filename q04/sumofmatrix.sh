@@ -1,57 +1,61 @@
 #!/bin/bash
 
-echo "Enter number of rows:"
+# Read dimensions
+echo -n "Enter number of rows: "
 read rows
-echo "Enter number of columns:"
+echo -n "Enter number of columns: "
 read cols
 
-echo "Enter elements of Matrix A:"
+# Read first matrix
+echo "Enter elements of first matrix ($rows x $cols):"
 for ((i=0; i<rows; i++))
 do
     for ((j=0; j<cols; j++))
     do
-        read a[$i,$j]
+        read a[$((i*cols + j))]
     done
 done
 
-echo "Enter elements of Matrix B:"
+# Read second matrix
+echo "Enter elements of second matrix ($rows x $cols):"
 for ((i=0; i<rows; i++))
 do
     for ((j=0; j<cols; j++))
     do
-        read b[$i,$j]
+        read b[$((i*cols + j))]
     done
 done
 
-# Display Matrix A
-echo "Matrix A:"
+# Display first matrix
+echo "First Matrix:"
 for ((i=0; i<rows; i++))
 do
     for ((j=0; j<cols; j++))
     do
-        echo -n "${a[$i,$j]} "
-    done
-    echo
-done
-
-# Display Matrix B
-echo "Matrix B:"
-for ((i=0; i<rows; i++))
-do
-    for ((j=0; j<cols; j++))
-    do
-        echo -n "${b[$i,$j]} "
+        echo -n "${a[$((i*cols + j))]} "
     done
     echo
 done
 
-# Matrix Addition and Display
-echo "Resultant Matrix After Addition:"
+# Display second matrix
+echo "Second Matrix:"
 for ((i=0; i<rows; i++))
 do
     for ((j=0; j<cols; j++))
     do
-        sum=$(( ${a[$i,$j]} + ${b[$i,$j]} ))
+        echo -n "${b[$((i*cols + j))]} "
+    done
+    echo
+done
+
+# Compute and display sum
+echo "Resultant Matrix (Sum):"
+for ((i=0; i<rows; i++))
+do
+    for ((j=0; j<cols; j++))
+    do
+        idx=$((i*cols + j))
+        sum=$(( a[idx] + b[idx] ))
         echo -n "$sum "
     done
     echo
