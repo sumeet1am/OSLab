@@ -4,7 +4,8 @@
 #define MAX 100
 
 typedef struct {
-    int id, at, bt, rt, st, ct, tat, wt, rt_time, started;
+    int id, at, bt, rt;         // at=arrival, bt=burst, rt=remaining time
+    int st, ct, tat, wt, rt_time, started;
 } Process;
 
 void input(Process p[], int n) {
@@ -12,9 +13,9 @@ void input(Process p[], int n) {
         p[i].id = i + 1;
         printf("Enter Arrival Time and Burst Time of P%d: ", p[i].id);
         scanf("%d%d", &p[i].at, &p[i].bt);
-        p[i].rt = p[i].bt;
+        p[i].rt = p[i].bt;   // remaining time initially = burst
         p[i].started = 0;
-        p[i].rt_time = -1;
+        p[i].rt_time = -1;   // response time not set
     }
 }
 
@@ -33,21 +34,19 @@ void calculate(Process p[], int n) {
     int time = 0, completed = 0, last = -1;
     float total_tat = 0, total_wt = 0, total_rt = 0;
 
-    printf("\nGantt Chart:\n");
-    printf("%d ", time);
+    printf("\nGantt Chart:\n%d ", time);
 
     while (completed < n) {
         int idx = findShortest(p, n, time);
 
-        if (idx == -1) {
+        if (idx == -1) {  // CPU idle
             time++;
-            printf("| IDLE %d ", time);
             continue;
         }
 
         if (p[idx].started == 0) {
             p[idx].st = time;
-            p[idx].rt_time = time - p[idx].at;
+            p[idx].rt_time = time - p[idx].at; // response time
             p[idx].started = 1;
         }
 
@@ -63,17 +62,19 @@ void calculate(Process p[], int n) {
             p[idx].ct = time;
             p[idx].tat = p[idx].ct - p[idx].at;
             p[idx].wt = p[idx].tat - p[idx].bt;
+
             total_tat += p[idx].tat;
-            total_wt += p[idx].wt;
-            total_rt += p[idx].rt_time;
+            total_wt  += p[idx].wt;
+            total_rt  += p[idx].rt_time;
             completed++;
         }
     }
-    printf("|\n");
+    printf("| %d\n", time);
 
     printf("\nProcess\tAT\tBT\tST\tCT\tTAT\tWT\tRT\n");
     for (int i = 0; i < n; i++) {
-        printf("P%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\n", p[i].id, p[i].at, p[i].bt, p[i].st,
+        printf("P%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\n",
+               p[i].id, p[i].at, p[i].bt, p[i].st,
                p[i].ct, p[i].tat, p[i].wt, p[i].rt_time);
     }
 
