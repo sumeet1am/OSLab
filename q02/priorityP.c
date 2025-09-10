@@ -4,94 +4,98 @@
 #define MAX 100
 
 typedef struct {
-    int id, at, bt, rt, ct, wt, tat, pr, st, resp;
-    int completed;
+    int id, at, bt, rt;          // arrival, burst, remaining time
+    int pr;                      // priority (lower number = higher priority)
+    int st, ct, tat, wt, rt_time, started;
 } Process;
 
 void input(Process p[], int n) {
     for (int i = 0; i < n; i++) {
-        printf("\nEnter AT, BT, Priority (lower = higher priority) for P%d: ", i + 1);
         p[i].id = i + 1;
+        printf("Enter Arrival Time, Burst Time and Priority of P%d: ", p[i].id);
         scanf("%d%d%d", &p[i].at, &p[i].bt, &p[i].pr);
         p[i].rt = p[i].bt;
-        p[i].completed = 0;
-        p[i].st = -1;
-        p[i].resp = -1;
+        p[i].started = 0;
+        p[i].rt_time = -1;
     }
 }
 
 int findHighestPriority(Process p[], int n, int time) {
-    int min_pr = INT_MAX, idx = -1;
+    int best_pr = INT_MAX, index = -1;
     for (int i = 0; i < n; i++) {
-        if (p[i].at <= time && p[i].rt > 0 && p[i].pr < min_pr) {
-            min_pr = p[i].pr;
-            idx = i;
+        if (p[i].at <= time && p[i].rt > 0) {
+            if (p[i].pr < best_pr) {
+                best_pr = p[i].pr;
+                index = i;
+            } else if (p[i].pr == best_pr) { 
+                // tie-breaker: lower arrival time first
+                if (p[i].at < p[index].at) index = i;
+            }
         }
     }
-    return idx;
+    return index;
 }
 
 void calculate(Process p[], int n) {
     int time = 0, completed = 0;
+    float total_tat = 0, total_wt = 0, total_rt = 0;
 
     printf("\nGantt Chart:\n");
+
     while (completed < n) {
         int idx = findHighestPriority(p, n, time);
 
-        if (idx != -1) {
-            if (p[idx].st == -1) {
-                p[idx].st = time;
-                p[idx].resp = time - p[idx].at; // Response time = first start - AT
-            }
-
-            // Print per time unit in your format
-            printf("| P%d(1) %d", p[idx].id, time + 1);
-
-            p[idx].rt--;
+        if (idx == -1) { // CPU idle
             time++;
+            continue;
+        }
 
-            if (p[idx].rt == 0) {
-                p[idx].ct = time;
-                p[idx].tat = p[idx].ct - p[idx].at;
-                p[idx].wt = p[idx].tat - p[idx].bt;
-                p[idx].completed = 1;
-                completed++;
-            }
-        } else {
-            // CPU idle slot
-            printf("| Idle(1) %d", time + 1);
-            time++;
+        if (p[idx].started == 0) {
+            p[idx].st = time;
+            p[idx].rt_time = time - p[idx].at;
+            p[idx].started = 1;
+        }
+
+        // print like SJF format
+        printf("| P%d(1) %d", p[idx].id, time + 1);
+
+        p[idx].rt--;
+        time++;
+
+        if (p[idx].rt == 0) {
+            p[idx].ct = time;
+            p[idx].tat = p[idx].ct - p[idx].at;
+            p[idx].wt = p[idx].tat - p[idx].bt;
+
+            total_tat += p[idx].tat;
+            total_wt  += p[idx].wt;
+            total_rt  += p[idx].rt_time;
+            completed++;
         }
     }
     printf("|\n");
-}
 
-void display(Process p[], int n) {
-    float total_wt = 0, total_tat = 0, total_rt = 0;
-
-    printf("\nID\tAT\tBT\tPR\tCT\tTAT\tWT\tRT");
+    printf("\nProcess\tAT\tBT\tPR\tST\tCT\tTAT\tWT\tRT\n");
     for (int i = 0; i < n; i++) {
-        printf("\nP%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d",
+        printf("P%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\n",
                p[i].id, p[i].at, p[i].bt, p[i].pr,
-               p[i].ct, p[i].tat, p[i].wt, p[i].resp);
-
-        total_wt += p[i].wt;
-        total_tat += p[i].tat;
-        total_rt += p[i].resp;
+               p[i].st, p[i].ct, p[i].tat, p[i].wt, p[i].rt_time);
     }
 
-    printf("\n\nAvg WT = %.2f", total_wt / n);
-    printf("\nAvg TAT = %.2f", total_tat / n);
-    printf("\nAvg RT = %.2f\n", total_rt / n);
+    printf("\nAverage Turnaround Time: %.2f", total_tat / n);
+    printf("\nAverage Waiting Time: %.2f", total_wt / n);
+    printf("\nAverage Response Time: %.2f\n", total_rt / n);
 }
 
 int main() {
     Process p[MAX];
     int n;
+
     printf("Enter number of processes: ");
     scanf("%d", &n);
+
     input(p, n);
     calculate(p, n);
-    display(p, n);
+
     return 0;
 }
